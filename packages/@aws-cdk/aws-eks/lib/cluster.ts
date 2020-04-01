@@ -18,6 +18,14 @@ import { renderUserData } from './user-data';
 const DEFAULT_CAPACITY_COUNT = 2;
 const DEFAULT_CAPACITY_TYPE = ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.LARGE);
 
+export interface AdditionalVpcConfig {
+  readonly endpointPrivateAccess?: boolean,
+  readonly endpointPublicAccess?: boolean,
+  readonly publicAccessCidrs?: string[],
+}
+
+export interface ExtendedVpcConfig extends CfnCluster.ResourcesVpcConfigProperty, AdditionalVpcConfig {}
+
 /**
  * An EKS cluster
  */
@@ -246,7 +254,9 @@ export interface ClusterProps extends ClusterOptions {
    *
    * @default NODEGROUP
    */
-  readonly defaultCapacityType?: DefaultCapacityType
+  readonly defaultCapacityType?: DefaultCapacityType;
+
+  readonly resourcesVpcConfig?: AdditionalVpcConfig;
 }
 
 /**
@@ -386,18 +396,23 @@ export class Cluster extends Resource implements ICluster {
     const placements = props.vpcSubnets || [{ subnetType: ec2.SubnetType.PUBLIC }, { subnetType: ec2.SubnetType.PRIVATE }];
     const subnetIds = [...new Set(Array().concat(...placements.map(s => this.vpc.selectSubnets(s).subnetIds)))];
 
+    let resource;
+    this.kubectlEnabled = props.kubectlEnabled === undefined ? true : props.kubectlEnabled;
+    const resourcesVpcConfig: AdditionalVpcConfig = {
+      endpointPublicAccess: true,
+      endpointPrivateAccess: false,
+      ...this.kubectlEnabled ? props.resourcesVpcConfig : {},
+     } as AdditionalVpcConfig;
     const clusterProps: CfnClusterProps = {
       name: this.physicalName,
       roleArn: this.role.roleArn,
       version: props.version,
       resourcesVpcConfig: {
+        ...resourcesVpcConfig,
         securityGroupIds: [securityGroup.securityGroupId],
-        subnetIds
+        subnetIds,
       }
     };
-
-    let resource;
-    this.kubectlEnabled = props.kubectlEnabled === undefined ? true : props.kubectlEnabled;
     if (this.kubectlEnabled) {
       resource = new ClusterResource(this, 'Resource', clusterProps);
       this._clusterResource = resource;
@@ -490,7 +505,7 @@ export class Cluster extends Resource implements ICluster {
     return asg;
   }
 
-  /**
+    /**
    * Add managed nodegroup to this Amazon EKS cluster
    *
    * This method will create a new managed nodegroup and add into the capacity.
