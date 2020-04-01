@@ -1,11 +1,11 @@
 import { Construct } from '@aws-cdk/core';
-import { Cluster, ClusterOptions, CoreDnsComputeType } from './cluster';
+import { Cluster, ClusterProps, CoreDnsComputeType,  } from './cluster';
 import { FargateProfileOptions } from './fargate-profile';
 
 /**
  * Configuration props for EKS Fargate.
  */
-export interface FargateClusterProps extends ClusterOptions {
+export interface FargateClusterProps extends ClusterProps {
   /**
    * Fargate Profile to create along with the cluster.
    *
@@ -28,7 +28,11 @@ export class FargateCluster extends Cluster {
       ...props,
       defaultCapacity: 0,
       kubectlEnabled: true,
-      coreDnsComputeType: props.coreDnsComputeType ?? CoreDnsComputeType.FARGATE
+      coreDnsComputeType: props.coreDnsComputeType ?? CoreDnsComputeType.FARGATE,
+      resourcesVpcConfig: {
+        endpointPublicAccess: false,
+        endpointPrivateAccess: true,
+      },
     });
 
     this.addFargateProfile(
