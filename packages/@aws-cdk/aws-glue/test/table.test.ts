@@ -1,6 +1,6 @@
 import { deepEqual, doesNotThrow, equal, notEqual, ok } from 'assert';
-import { expect as cdkExpect, haveResource, ResourcePart } from '@aws-cdk/assert';
-import '@aws-cdk/assert/jest';
+import { expect as cdkExpect, haveResource, ResourcePart } from '@aws-cdk/assert-internal';
+import '@aws-cdk/assert-internal/jest';
 import * as iam from '@aws-cdk/aws-iam';
 import * as kms from '@aws-cdk/aws-kms';
 import * as s3 from '@aws-cdk/aws-s3';
@@ -1189,7 +1189,6 @@ testFutureBehavior('grants: read and write', s3GrantWriteCtx, cdk.App, (app) => 
             'glue:GetTableVersion',
             'glue:GetTableVersions',
             'glue:BatchCreatePartition',
-            'glue:BatchDeletePartition',
             'glue:CreatePartition',
             'glue:DeletePartition',
             'glue:UpdatePartition',

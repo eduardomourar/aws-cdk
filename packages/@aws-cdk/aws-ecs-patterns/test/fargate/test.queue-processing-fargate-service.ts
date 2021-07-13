@@ -1,4 +1,4 @@
-import { ABSENT, expect, haveResource, haveResourceLike } from '@aws-cdk/assert';
+import { ABSENT, expect, haveResource, haveResourceLike } from '@aws-cdk/assert-internal';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as ecs from '@aws-cdk/aws-ecs';
 import * as sqs from '@aws-cdk/aws-sqs';
@@ -141,6 +141,7 @@ export = {
       image: ecs.ContainerImage.fromRegistry('test'),
       maxReceiveCount: 42,
       retentionPeriod: cdk.Duration.days(7),
+      visibilityTimeout: cdk.Duration.minutes(5),
     });
 
     // THEN - QueueWorker is of FARGATE launch type, an SQS queue is created and all default properties are set.
@@ -159,6 +160,7 @@ export = {
         },
         maxReceiveCount: 42,
       },
+      VisibilityTimeout: 300,
     }));
 
     expect(stack).to(haveResource('AWS::SQS::Queue', {
@@ -344,9 +346,7 @@ export = {
       serviceName: 'fargate-test-service',
       family: 'fargate-task-family',
       platformVersion: ecs.FargatePlatformVersion.VERSION1_4,
-      deploymentController: {
-        type: ecs.DeploymentControllerType.CODE_DEPLOY,
-      },
+      circuitBreaker: { rollback: true },
     });
 
     // THEN - QueueWorker is of FARGATE launch type, an SQS queue is created and all optional properties are set.
@@ -355,12 +355,16 @@ export = {
       DeploymentConfiguration: {
         MinimumHealthyPercent: 60,
         MaximumPercent: 150,
+        DeploymentCircuitBreaker: {
+          Enable: true,
+          Rollback: true,
+        },
       },
       LaunchType: 'FARGATE',
       ServiceName: 'fargate-test-service',
       PlatformVersion: ecs.FargatePlatformVersion.VERSION1_4,
       DeploymentController: {
-        Type: 'CODE_DEPLOY',
+        Type: 'ECS',
       },
     }));
 

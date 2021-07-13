@@ -1,4 +1,4 @@
-import { expect, haveResourceLike } from '@aws-cdk/assert';
+import { expect, haveResourceLike } from '@aws-cdk/assert-internal';
 import * as codebuild from '@aws-cdk/aws-codebuild';
 import * as codecommit from '@aws-cdk/aws-codecommit';
 import * as codepipeline from '@aws-cdk/aws-codepipeline';
@@ -248,6 +248,63 @@ nodeunitShim({
                 'Name': 'CodeBuild',
                 'Configuration': {
                   'BatchEnabled': 'true',
+                },
+              },
+            ],
+          },
+        ],
+      }));
+
+      test.done();
+    },
+
+    'sets the CombineArtifacts configuration'(test: Test) {
+      const stack = new Stack();
+
+      const codeBuildProject = new codebuild.PipelineProject(stack, 'CodeBuild');
+
+      const sourceOutput = new codepipeline.Artifact();
+      new codepipeline.Pipeline(stack, 'Pipeline', {
+        stages: [
+          {
+            stageName: 'Source',
+            actions: [
+              new cpactions.S3SourceAction({
+                actionName: 'S3_Source',
+                bucket: new s3.Bucket(stack, 'Bucket'),
+                bucketKey: 'key',
+                output: sourceOutput,
+              }),
+            ],
+          },
+          {
+            stageName: 'Build',
+            actions: [
+              new cpactions.CodeBuildAction({
+                actionName: 'CodeBuild',
+                input: sourceOutput,
+                project: codeBuildProject,
+                executeBatchBuild: true,
+                combineBatchBuildArtifacts: true,
+              }),
+            ],
+          },
+        ],
+      });
+
+      expect(stack).to(haveResourceLike('AWS::CodePipeline::Pipeline', {
+        'Stages': [
+          {
+            'Name': 'Source',
+          },
+          {
+            'Name': 'Build',
+            'Actions': [
+              {
+                'Name': 'CodeBuild',
+                'Configuration': {
+                  'BatchEnabled': 'true',
+                  'CombineArtifacts': 'true',
                 },
               },
             ],

@@ -113,6 +113,11 @@ Routing traffic from a Load Balancer to a Target involves the following steps:
 - Create a Target Group, register the Target into the Target Group
 - Add an Action to the Listener which forwards traffic to the Target Group.
 
+A new listener can be added to the Load Balancer by calling `addListener()`.
+Listeners that have been added to the load balancer can be listed using the
+`listeners` property.  Note that the `listeners` property will throw an Error
+for imported or looked up Load Balancers.
+
 Various methods on the `Listener` take care of this work for you to a greater
 or lesser extent:
 
@@ -272,6 +277,24 @@ const tg2 = new elbv2.ApplicationTargetGroup(stack, 'TG2', {
 ```
 
 For more information see: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/sticky-sessions.html#application-based-stickiness
+
+### Setting the target group protocol version
+
+By default, Application Load Balancers send requests to targets using HTTP/1.1. You can use the [protocol version](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-protocol-version) to send requests to targets using HTTP/2 or gRPC.
+
+```ts
+const tg = new elbv2.ApplicationTargetGroup(stack, 'TG', {
+  targetType: elbv2.TargetType.IP,
+  port: 50051,
+  protocol: elbv2.ApplicationProtocol.HTTP,
+  protocolVersion: elbv2.ApplicationProtocolVersion.GRPC,
+  healthCheck: {
+    enabled: true,
+    healthyGrpcCodes: '0-99',
+  },
+  vpc,
+});
+```
 
 ## Using Lambda Targets
 

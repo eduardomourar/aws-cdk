@@ -1,4 +1,4 @@
-import { expect, haveResource, haveResourceLike } from '@aws-cdk/assert';
+import { expect, haveResource, haveResourceLike } from '@aws-cdk/assert-internal';
 import { AnyPrincipal, PolicyStatement } from '@aws-cdk/aws-iam';
 import * as cxschema from '@aws-cdk/cloud-assembly-schema';
 import { ContextProvider, Fn, Stack } from '@aws-cdk/core';
@@ -133,7 +133,7 @@ nodeunitShim({
                 's3:ListBucket',
               ],
               Effect: 'Allow',
-              Principal: '*',
+              Principal: { AWS: '*' },
               Resource: '*',
             },
           ],

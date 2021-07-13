@@ -1,4 +1,4 @@
-import '@aws-cdk/assert/jest';
+import '@aws-cdk/assert-internal/jest';
 import { App, CfnOutput, Stack } from '@aws-cdk/core';
 import * as iam from '../lib';
 
@@ -165,4 +165,14 @@ test('SAML principal', () => {
       Version: '2012-10-17',
     },
   });
+});
+
+test('PrincipalWithConditions inherits principalAccount from AccountPrincipal ', () => {
+  // GIVEN
+  const accountPrincipal = new iam.AccountPrincipal('123456789012');
+  const principalWithConditions = accountPrincipal.withConditions({ StringEquals: { hairColor: 'blond' } });
+
+  // THEN
+  expect(accountPrincipal.principalAccount).toStrictEqual('123456789012');
+  expect(principalWithConditions.principalAccount).toStrictEqual('123456789012');
 });

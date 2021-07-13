@@ -1,4 +1,4 @@
-import { expect, haveResource } from '@aws-cdk/assert';
+import { expect, haveResource } from '@aws-cdk/assert-internal';
 import * as iam from '@aws-cdk/aws-iam';
 import { Aws, CfnResource, Stack, Arn } from '@aws-cdk/core';
 import { Test } from 'nodeunit';
@@ -75,6 +75,19 @@ export = {
       EventBusArn1: { 'Fn::GetAtt': ['BusEA82B648', 'Arn'] },
       EventBusArn2: { 'Fn::GetAtt': ['BusEA82B648', 'Arn'] },
     }));
+
+    test.done();
+  },
+
+  'imported event bus from name'(test: Test) {
+    const stack = new Stack();
+
+    const eventBus = new EventBus(stack, 'Bus', { eventBusName: 'test-bus-to-import-by-name' });
+
+    const importEB = EventBus.fromEventBusName(stack, 'ImportBus', eventBus.eventBusName);
+
+    // WHEN
+    test.deepEqual(stack.resolve(eventBus.eventBusName), stack.resolve(importEB.eventBusName));
 
     test.done();
   },

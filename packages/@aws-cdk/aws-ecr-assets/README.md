@@ -3,19 +3,15 @@
 
 ---
 
-![cdk-constructs: Experimental](https://img.shields.io/badge/cdk--constructs-experimental-important.svg?style=for-the-badge)
-
-> The APIs of higher level constructs in this module are experimental and under active development.
-> They are subject to non-backward compatible changes or removal in any future version. These are
-> not subject to the [Semantic Versioning](https://semver.org/) model and breaking changes will be
-> announced in the release notes. This means that while you may use them, you may need to update
-> your source code when upgrading to a newer version of this package.
+![cdk-constructs: Stable](https://img.shields.io/badge/cdk--constructs-stable-success.svg?style=for-the-badge)
 
 ---
 
 <!--END STABILITY BANNER-->
 
 This module allows bundling Docker images as assets.
+
+## Images from Dockerfile
 
 Images are built from a local Docker context directory (with a `Dockerfile`),
 uploaded to ECR by the CDK toolkit and/or your app's CI-CD pipeline, and can be
@@ -74,6 +70,55 @@ const asset = new DockerImageAsset(this, 'MyBuildImage', {
   target: 'a-target'
 })
 ```
+
+## Images from Tarball
+
+Images are loaded from a local tarball, uploaded to ECR by the CDK toolkit and/or your app's CI-CD pipeline, and can be
+naturally referenced in your CDK app.
+
+```ts
+import { TarballImageAsset } from '@aws-cdk/aws-ecr-assets';
+
+const asset = new TarballImageAsset(this, 'MyBuildImage', {
+  tarballFile: 'local-image.tar'
+});
+```
+
+This will instruct the toolkit to add the tarball as a file asset. During deployment it will load the container image
+from `local-image.tar`, push it to an AWS ECR repository and wire the name of the repository as CloudFormation parameters
+to your stack.
+
+## Publishing images to ECR repositories
+
+`DockerImageAsset` is designed for seamless build & consumption of image assets by CDK code deployed to multiple environments
+through the CDK CLI or through CI/CD workflows. To that end, the ECR repository behind this construct is controlled by the AWS CDK.
+The mechanics of where these images are published and how are intentionally kept as an implementation detail, and the construct
+does not support customizations such as specifying the ECR repository name or tags.
+
+If you are looking for a way to _publish_ image assets to an ECR repository in your control, you should consider using
+[cdklabs/cdk-ecr-deployment], which is able to replicate an image asset from the CDK-controlled ECR repository to a repository of
+your choice.
+
+Here an example from the [cdklabs/cdk-ecr-deployment] project:
+
+```ts
+import * as ecrdeploy from 'cdk-ecr-deployment';
+
+const image = new DockerImageAsset(this, 'CDKDockerImage', {
+  directory: path.join(__dirname, 'docker'),
+});
+
+new ecrdeploy.ECRDeployment(this, 'DeployDockerImage', {
+  src: new ecrdeploy.DockerImageName(image.imageUri),
+  dest: new ecrdeploy.DockerImageName(`${cdk.Aws.ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/test:nginx`),
+});
+```
+
+⚠️ Please note that this is a 3rd-party construct library and is not officially supported by AWS.
+You are welcome to +1 [this GitHub issue](https://github.com/aws/aws-cdk/issues/12597) if you would like to see
+native support for this use-case in the AWS CDK.
+
+[cdklabs/cdk-ecr-deployment]: https://github.com/cdklabs/cdk-ecr-deployment
 
 ## Pull Permissions
 

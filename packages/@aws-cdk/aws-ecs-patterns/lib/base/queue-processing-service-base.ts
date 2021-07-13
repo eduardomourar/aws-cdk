@@ -1,6 +1,9 @@
 import { ScalingInterval } from '@aws-cdk/aws-applicationautoscaling';
 import { IVpc } from '@aws-cdk/aws-ec2';
-import { AwsLogDriver, BaseService, Cluster, ContainerImage, DeploymentController, ICluster, LogDriver, PropagatedTagSource, Secret } from '@aws-cdk/aws-ecs';
+import {
+  AwsLogDriver, BaseService, Cluster, ContainerImage, DeploymentController, DeploymentCircuitBreaker,
+  ICluster, LogDriver, PropagatedTagSource, Secret,
+} from '@aws-cdk/aws-ecs';
 import { IQueue, Queue } from '@aws-cdk/aws-sqs';
 import { CfnOutput, Duration, Stack } from '@aws-cdk/core';
 import * as cxapi from '@aws-cdk/cx-api';
@@ -104,6 +107,14 @@ export interface QueueProcessingServiceBaseProps {
   readonly maxReceiveCount?: number;
 
   /**
+   * Timeout of processing a single message. After dequeuing, the processor has this much time to handle the message and delete it from the queue
+   * before it becomes visible again for dequeueing by another processor. Values must be between 0 and (12 hours).
+   *
+   * @default Duration.seconds(30)
+   */
+  readonly visibilityTimeout?: Duration;
+
+  /**
    * The number of seconds that Dead Letter Queue retains a message.
    *
    * @default Duration.days(14)
@@ -189,6 +200,13 @@ export interface QueueProcessingServiceBaseProps {
    * @default - Rolling update (ECS)
    */
   readonly deploymentController?: DeploymentController;
+
+  /**
+   * Whether to enable the deployment circuit breaker. If this property is defined, circuit breaker will be implicitly
+   * enabled.
+   * @default - disabled
+   */
+  readonly circuitBreaker?: DeploymentCircuitBreaker;
 }
 
 /**
@@ -267,6 +285,7 @@ export abstract class QueueProcessingServiceBase extends CoreConstruct {
         retentionPeriod: props.retentionPeriod || Duration.days(14),
       });
       this.sqsQueue = new Queue(this, 'EcsProcessingQueue', {
+        visibilityTimeout: props.visibilityTimeout,
         deadLetterQueue: {
           queue: this.deadLetterQueue,
           maxReceiveCount: props.maxReceiveCount || 3,

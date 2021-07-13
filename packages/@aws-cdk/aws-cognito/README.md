@@ -87,9 +87,9 @@ new cognito.UserPool(this, 'myuserpool', {
   selfSignUpEnabled: true,
   userVerification: {
     emailSubject: 'Verify your email for our awesome app!',
-    emailBody: 'Hello {username}, Thanks for signing up to our awesome app! Your verification code is {####}',
+    emailBody: 'Thanks for signing up to our awesome app! Your verification code is {####}',
     emailStyle: cognito.VerificationEmailStyle.CODE,
-    smsMessage: 'Hello {username}, Thanks for signing up to our awesome app! Your verification code is {####}',
+    smsMessage: 'Thanks for signing up to our awesome app! Your verification code is {####}',
   }
 });
 ```
@@ -213,6 +213,12 @@ Custom attributes cannot be marked as required.
 
 All custom attributes share the property `mutable` that specifies whether the value of the attribute can be changed.
 The default value is `false`.
+
+User pools come with two 'built-in' attributes - `email_verified` and `phone_number_verified`. These cannot be
+configured (required-ness or mutability) as part of user pool creation. However, user pool administrators can modify
+them for specific users using the [AdminUpdateUserAttributes API].
+
+[AdminUpdateUserAttributes API]: https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_AdminUpdateUserAttributes.html
 
 ### Security
 
@@ -345,7 +351,7 @@ on the construct, as so -
 const authChallengeFn = new lambda.Function(this, 'authChallengeFn', {
   runtime: lambda.Runtime.NODEJS_12_X,
   handler: 'index.handler',
-  code: lambda.Code.fromInline('auth challenge'),
+  code: lambda.Code.fromAsset(/* path to lambda asset */),
 });
 
 const userpool = new cognito.UserPool(this, 'myuserpool', {
@@ -359,7 +365,7 @@ const userpool = new cognito.UserPool(this, 'myuserpool', {
 userpool.addTrigger(cognito.UserPoolOperation.USER_MIGRATION, new lambda.Function(this, 'userMigrationFn', {
     runtime: lambda.Runtime.NODEJS_12_X,
   handler: 'index.handler',
-  code: lambda.Code.fromInline('user migration'),
+  code: lambda.Code.fromAsset(/* path to lambda asset */),
 }));
 ```
 
@@ -485,7 +491,7 @@ new cognito.UserPoolClient(this, 'customer-app-client', {
 ```
 
 Clients can be configured with authentication flows. Authentication flows allow users on a client to be authenticated
-with a user pool. Cognito user pools provide several several different types of authentication, such as, SRP (Secure
+with a user pool. Cognito user pools provide several different types of authentication, such as, SRP (Secure
 Remote Password) authentication, username-and-password authentication, etc. Learn more about this at [UserPool Authentication
 Flow](https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-authentication-flow.html).
 

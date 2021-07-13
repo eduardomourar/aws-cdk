@@ -75,7 +75,6 @@ export interface AddToPrincipalPolicyResult {
   /**
    * Whether the statement was added to the identity's policies.
    *
-   * @experimental
    */
   readonly statementAdded: boolean;
 
@@ -83,7 +82,6 @@ export interface AddToPrincipalPolicyResult {
    * Dependable which allows depending on the policy change being applied
    *
    * @default - Required if `statementAdded` is true.
-   * @experimental
    */
   readonly policyDependable?: cdk.IDependable;
 }
@@ -195,6 +193,10 @@ export class PrincipalWithConditions implements IPrincipal {
     return new PrincipalPolicyFragment(this.principal.policyFragment.principalJson, this.conditions);
   }
 
+  public get principalAccount(): string | undefined {
+    return this.principal.principalAccount;
+  }
+
   public addToPolicy(statement: PolicyStatement): boolean {
     return this.addToPrincipalPolicy(statement).statementAdded;
   }
@@ -296,12 +298,15 @@ export class ArnPrincipal extends PrincipalBase {
  * Specify AWS account ID as the principal entity in a policy to delegate authority to the account.
  */
 export class AccountPrincipal extends ArnPrincipal {
+  public readonly principalAccount: string | undefined;
+
   /**
    *
    * @param accountId AWS account ID (i.e. 123456789012)
    */
   constructor(public readonly accountId: any) {
     super(new StackDependentToken(stack => `arn:${stack.partition}:iam::${accountId}:root`).toString());
+    this.principalAccount = accountId;
   }
 
   public toString() {

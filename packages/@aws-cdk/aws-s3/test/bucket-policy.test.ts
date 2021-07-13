@@ -1,4 +1,4 @@
-import { expect, haveResource } from '@aws-cdk/assert';
+import { expect, haveResource } from '@aws-cdk/assert-internal';
 import { AnyPrincipal, PolicyStatement } from '@aws-cdk/aws-iam';
 import { RemovalPolicy, Stack, App } from '@aws-cdk/core';
 import { nodeunitShim, Test } from 'nodeunit-shim';
@@ -31,7 +31,7 @@ nodeunitShim({
           {
             'Action': 's3:GetObject*',
             'Effect': 'Allow',
-            'Principal': '*',
+            'Principal': { AWS: '*' },
             'Resource': { 'Fn::GetAtt': ['MyBucketF68F3FF0', 'Arn'] },
           },
         ],
@@ -73,7 +73,7 @@ nodeunitShim({
                 {
                   'Action': 's3:GetObject*',
                   'Effect': 'Allow',
-                  'Principal': '*',
+                  'Principal': { AWS: '*' },
                   'Resource': { 'Fn::GetAtt': ['MyBucketF68F3FF0', 'Arn'] },
                 },
               ],
@@ -118,7 +118,7 @@ nodeunitShim({
                 {
                   'Action': 's3:GetObject*',
                   'Effect': 'Allow',
-                  'Principal': '*',
+                  'Principal': { AWS: '*' },
                   'Resource': { 'Fn::GetAtt': ['MyBucketF68F3FF0', 'Arn'] },
                 },
               ],
